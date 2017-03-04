@@ -71,5 +71,6 @@ Start the service with `cargo run` and that's enough to cURL
 [http://localhost:8080/games](http://localhost:8080/games) and receive a
 greeting to the whole world.
 
-This concludes part 1 of the PoC. In part 2 I will cover basic database
-interaction.
+This concludes part 1 of the PoC. In  
+[part 2](https://codingwithglee.blogspot.de/2017/03/my-shot-at-restful-microservices-in.html)
+I will cover basic database interaction.
