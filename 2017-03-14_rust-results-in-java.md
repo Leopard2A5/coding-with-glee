@@ -22,6 +22,6 @@ Java's error handling mechanism is built around the `Throwable` interface. Every
           +------------------+   +-------------+
 ```
 
-When Java was designed, the decision was made to add the concept of *checked exceptions*. A checked exception is any class that inherits from `Exception` and doesn't also have `RuntimeException` in its type hierarchy, which in turn is a direct subtype of `Exception`. Whenever your code calls a method that may throw a checked exception, you **have** to handle it, either by adding a compatible *throws* declaration to your method or by catching it in a try-catch block.
+When Java was designed, the decision was made to add the concept of *checked exceptions*. A checked exception is any class that inherits from `Exception` and doesn't also have `RuntimeException` as an ancestor, which in turn is a direct subtype of `Exception`. Whenever your code calls a method that may throw a checked exception, you **have** to handle it, either by adding a compatible *throws* declaration to your method or by catching it in a try-catch block.
 
 ## Rust Results
