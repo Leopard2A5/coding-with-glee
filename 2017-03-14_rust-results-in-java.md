@@ -1,5 +1,3 @@
-# Bringing Rust's Result type to Java
-
 The Rust programming language was designed without exceptions to handle errors. Instead, the concept of errors is addressed with the generic `Result<T, E>` enum type. In this post I will compare Rust's and Java's error handling mechanisms and discuss if and how Rust's way of doing it can be applied to Java.
 
 ## Java exceptions
@@ -44,14 +42,7 @@ An example for this kind of consideration in API design is Rust's `Vec` type: th
 
 ## A Result type for Java
 
-I've created the [result-flow](https://github.com/Leopard2A5/result-flow) library, which brings a `Result` interface and the implementing classes `Ok` and `Err`. You can easily try it out by adding the following dependency to your project:
-```xml
-<dependency>
-  <groupId>com.github.leopard2a5</groupId>
-  <artifactId>result-flow</artifactId>
-  <version>1.0.0</version>
-</dependency>
-```
+I've created the [result-flow](https://github.com/Leopard2A5/result-flow) library, which brings a `Result` interface and the implementing classes `Ok` and `Err`. It's located in the Nexus repository [here](https://search.maven.org/#artifactdetails%7Ccom.github.leopard2a5%7Cresult-flow%7C1.0.0%7Cjar).
 
 Consider the following example:
 ```java
@@ -91,6 +82,69 @@ The main method reads a line from *stdin*, then parses the read line to an Integ
 
 Notice the difference between `andThen` and `map`: The former is used when the method to be called returns a Result, whereas the latter is used when that method does not fail with a Result itself.
 
-Notice also that an IOException that occurs when we try to read from the InputStream will also be wrapped in an Err. This obviously doesn't make a lot of sense in production code. Depending on the context, an IOException would rather be treated as an exceptional or unrecoverable error.
+Notice also that an IOException that occurs when we try to read from the InputStream will also be wrapped in an Err. This obviously doesn't make a lot of sense in production code. Depending on the context an IOException would rather be treated as an exceptional or unrecoverable error.
 
 Hence, my advice would be to keep any truly exceptional and/or unrecoverable errors like the aforementioned *panics* in Rust and use the conventional try-catch block on some level in the call stack. For errors of the application domain however, I think the pattern could be applicable on the JVM.
+
+## Error types
+
+The `Result` type is generic, so any type of error (or ok value of course) is possible. In the Rust world a common pattern is to use enums as error types, but depending on the necessary information structs are not unheard of in this role either. When you use a library (or *crate* for Rustaceans) that returns Results it is typical to either wrap or translate the erroneous values into a type of the domain of the application, typically an enum.
+
+```rust
+pub enum ApplicationError {
+  AppError,         // some meaningful error in the application
+  DbError(PgError), // wraps an error of the database connector
+}
+```
+
+Rust enums are more powerful than Java's in the sense that they can wrap values, whereas Javas enum instances are static. This is easily overcome in Java by using actual classes or instances respectively, it cannot help with the language-specific problems.
+
+## Match expressions
+
+Rust's *match* statement can be compared to Java's *switch*, but it is much more powerful. For instance the Java compiler will not complain about a switch statment over an enum that is not exhaustive, whereas Rust will fail the compilation if not all enum values have been addressed. Furthermore, Rust's match statement can actually look into the provided enum and bind the contained value to variables. This is one shortcoming that cannot easily be helped in Java. Less important in this context but nonetheless worthy of mentioning: Rust's *match* is an expression and can return a value, whereas Java's *switch* is a statement.
+
+```rust
+let foo: Result<String, i8> = Ok("Hi!");
+match foo {
+  Ok(x) => println!("Got Ok: {}", x),
+  Err(f) => println!("Got error: {}", f),
+}
+```
+
+## Macros
+
+Rust's support for macros adds greatly to the usefulness of the Result enum, because it enables a function to not explicitly handle an error but to stop the execution and return the error. This is closely related to Java's *throws* declaration.
+
+```rust
+fn foo() -> Result<String, ()> {
+  let b = bar()?;
+  let c = try!(bar());
+
+  // do something
+}
+
+fn bar() -> Result<String, ()> {
+  Err(())
+}
+```
+
+In the example above, function *foo* calls function *bar*. Both functions have the same return type. Rust's compiler complains about unhandled results, but *foo* doesn't want to handle any errors. Instead it uses the `try!(<expr>)` macro (which can also be written as `<expr>?`) that generates the necessary code to return an eventual error preemptively from the function. The Java equivalent can be seen in the next code sample. This is a feature that cannot be mimicked in Java.
+
+```java
+public String foo() throws MyError {
+  final String b = bar();
+  final String c = bar();
+
+  // do something
+}
+
+public String bar() throws MyError {
+  throw new MyError();
+}
+```
+
+## Conclusion
+
+The biggest disadvantage that I see with Rust's Result type in Java is that it breaks with the idiomatic way to code in Java and that the developer has to think very carefully about which errors they encode in a Result and which of them as RuntimeExceptions (or panics in Rust). A great difficulty are third-party libraries as well as some parts of the standard library that rely on checked exceptions. Those will most probably have to be wrapped with try-catch and converted to either RuntimeExceptions or Results.
+
+The great advantage of the approach is the way it enables a more functional type of programming, like version 8 of Java did with the `Optional` type. I have yet to try the library in any type of project apart from small experiments. Should you try it out I'll be glad to have your feedback and thoughts about it.
