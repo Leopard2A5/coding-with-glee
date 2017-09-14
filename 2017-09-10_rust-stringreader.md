@@ -1,3 +1,5 @@
+[Update](#update)
+
 I was recently working on a rust crate (read library) for parsing input files for Conway's game of life. The idea was to have a `Parser` trait like this:
 ```rust
 use std::io::Read;
@@ -74,3 +76,8 @@ parser.parse(input);
 I was really surprised that `std::io::Read` isn't implemented for Rust's string type(s), but in the end this allowed me to contribute a (imho) useful crate to the community. That Rust's slices provide an iterator was very helpful in accomplishing the task. All in all I'm satisfied with the crate and I hope it'll help others as well.
 
 Thanks for reading!
+
+## Update
+Someone hinted that, while `std::io::Read` is not implemented for Strings, it **is** implemented for `&'a [u8]`, which is incidentally what String's [as_bytes](https://doc.rust-lang.org/std/string/struct.String.html#method.as_bytes) method returns. Therefore, for example in a test, you can simple do `"foobar".as_bytes()` and you get a byte slice that implements `std::io::Read`.
+
+Therefore the `stringreader` crate is obsolete.
